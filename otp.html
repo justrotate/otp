@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OTP</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-[#e5e5ea] min-h-screen flex items-center justify-center font-sans">
+
+  <!-- iPhone Device Frame -->
+  <div class="relative">
+
+    <!-- Phone Body -->
+    <div class="w-[340px] h-[680px] bg-black rounded-[46px] p-[10px] shadow-2xl">
+
+      <!-- Screen -->
+      <div class="bg-[#f2f2f7] w-full h-full rounded-[36px] overflow-hidden relative flex flex-col">
+
+        <!-- Notch -->
+        <div class="absolute top-2 left-1/2 -translate-x-1/2 w-[140px] h-[26px] bg-black rounded-full z-50"></div>
+
+        <!-- App Content -->
+        <div class="flex-1 flex items-center justify-center px-6 pt-10 pb-6">
+
+          <!-- iOS App Card -->
+          <div class="w-full text-center relative">
+
+            <!-- Celebration Overlay -->
+            <div id="celebrationOverlay" class="hidden absolute inset-0 bg-black/70 flex items-center justify-center z-50 rounded-2xl">
+              <div id="celebrationText" class="text-white text-2xl font-semibold animate-pulse"></div>
+            </div>
+
+            <!-- Start Screen -->
+            <div id="startScreen" class="flex flex-col items-center gap-6">
+              <button id="startBtn" class="bg-black text-white w-20 h-20 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition">
+                <i data-lucide="play" class="w-8 h-8"></i>
+              </button>
+            </div>
+
+            <!-- Main Content -->
+            <div id="mainContent" class="hidden">
+
+              <!-- iOS Segmented Control -->
+              <div class="flex mb-6 bg-gray-200 rounded-full p-1">
+                <button id="gameTabBtn" class="flex-1 py-2 rounded-full bg-white text-xs font-medium shadow-sm">Game</button>
+                <button id="historyTabBtn" class="flex-1 py-2 rounded-full text-xs text-gray-500">History</button>
+              </div>
+
+              <!-- GAME TAB -->
+              <div id="gameTab">
+
+                <div class="flex justify-between text-[11px] text-gray-500 mb-4">
+                  <span>Level <span id="level">2</span></span>
+                  <span><span id="round">0</span>/10</span>
+                </div>
+
+                <!-- iPhone OTP Input -->
+                <div id="dashInput" class="flex justify-center gap-2 mb-6"></div>
+
+                <div class="text-[11px] text-gray-500 mb-2">
+                  Score <span id="score">0</span>
+                </div>
+
+                <div id="message" class="text-[11px] font-medium h-5 text-gray-600"></div>
+              </div>
+
+              <!-- HISTORY TAB -->
+              <div id="historyTab" class="hidden text-left">
+                <h2 class="font-medium mb-3 text-xs">Level Stats & Wrong Attempts</h2>
+                <div id="levelStats" class="mb-4 text-[11px]"></div>
+
+                <!-- Header Row -->
+                <div class="grid grid-cols-3 text-[10px] font-semibold text-gray-500 px-2 mb-1">
+                  <span>Level</span>
+                  <span class="text-center">Input</span>
+                  <span class="text-right">Correct</span>
+                </div>
+
+                <div id="historyList" class="text-[11px] space-y-1 max-h-64 overflow-y-auto"></div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+lucide.createIcons();
+
+let currentNumber = "";
+let score = 0;
+let round = 0;
+let level = 2;
+let history = [];
+let levelStats = {};
+let userEntry = "";
+let isMemorizing = false;
+
+const startBtn = document.getElementById("startBtn");
+const startScreen = document.getElementById("startScreen");
+const mainContent = document.getElementById("mainContent");
+
+const dashInput = document.getElementById("dashInput");
+const scoreEl = document.getElementById("score");
+const roundEl = document.getElementById("round");
+const levelEl = document.getElementById("level");
+const messageEl = document.getElementById("message");
+const historyListEl = document.getElementById("historyList");
+const levelStatsEl = document.getElementById("levelStats");
+
+const gameTabBtn = document.getElementById("gameTabBtn");
+const historyTabBtn = document.getElementById("historyTabBtn");
+const gameTab = document.getElementById("gameTab");
+const historyTab = document.getElementById("historyTab");
+
+const celebrationOverlay = document.getElementById("celebrationOverlay");
+const celebrationText = document.getElementById("celebrationText");
+
+// Tabs
+gameTabBtn.addEventListener("click", () => {
+  gameTab.classList.remove("hidden");
+  historyTab.classList.add("hidden");
+  gameTabBtn.classList.add("bg-white","shadow-sm");
+  historyTabBtn.classList.remove("bg-white","shadow-sm");
+});
+
+historyTabBtn.addEventListener("click", () => {
+  historyTab.classList.remove("hidden");
+  gameTab.classList.add("hidden");
+  historyTabBtn.classList.add("bg-white","shadow-sm");
+  gameTabBtn.classList.remove("bg-white","shadow-sm");
+});
+
+function generateNumber(digits) {
+  let min = Math.pow(10, digits - 1);
+  let max = Math.pow(10, digits) - 1;
+  return Math.floor(min + Math.random() * (max - min)).toString();
+}
+
+function showCelebration(text, duration = 2000) {
+  celebrationText.textContent = text;
+  celebrationOverlay.classList.remove("hidden");
+  setTimeout(() => celebrationOverlay.classList.add("hidden"), duration);
+}
+
+function renderDashInput(displayValue = "") {
+  dashInput.innerHTML = "";
+
+  for (let i = 0; i < level; i++) {
+    const box = document.createElement("div");
+    box.className = "w-11 h-14 rounded-xl bg-white border border-gray-300 flex items-center justify-center text-lg font-semibold text-black";
+
+    box.textContent = displayValue
+      ? displayValue[i] || "-"
+      : userEntry[i] || "-";
+
+    dashInput.appendChild(box);
+  }
+}
+
+function showNumber() {
+  currentNumber = generateNumber(level);
+  userEntry = "";
+  isMemorizing = true;
+
+  renderDashInput(currentNumber);
+  messageEl.textContent = "Memorize";
+
+  setTimeout(() => {
+    isMemorizing = false;
+    renderDashInput();
+    messageEl.textContent = "Enter";
+  }, 2200);
+}
+
+// ✅ FIXED SYNTAX ERROR HERE
+function updateHistory() {
+  historyListEl.innerHTML = history.map(h => `
+    <div class="grid grid-cols-3 items-center p-2 rounded-xl bg-white">
+      <span>L${h.level}</span>
+      <span class="text-center font-medium">${h.input}</span>
+      <span class="text-right font-mono">${h.correct}</span>
+    </div>
+  `).join("");
+}
+
+function updateLevelStats() {
+  levelStatsEl.innerHTML = Object.keys(levelStats).map(l => {
+    let s = levelStats[l];
+    return `<div class="flex justify-between border-b py-1">
+      <span>Level ${l}</span>
+      <span class="text-green-600">✔ ${s.correct}</span>
+      <span class="text-red-500">✖ ${s.wrong}</span>
+    </div>`;
+  }).join("");
+}
+
+function ensureLevelStat() {
+  if (!levelStats[level]) {
+    levelStats[level] = { correct: 0, wrong: 0 };
+  }
+}
+
+function submitEntry() {
+  ensureLevelStat();
+
+  if (userEntry === currentNumber) {
+    score++;
+    levelStats[level].correct++;
+    messageEl.textContent = "Correct";
+  } else {
+    levelStats[level].wrong++;
+    history.unshift({ level, input: userEntry, correct: currentNumber });
+    if (history.length > 50) history.pop();
+    messageEl.textContent = "Wrong";
+  }
+
+  scoreEl.textContent = score;
+  updateHistory();
+  updateLevelStats();
+  nextRound();
+}
+
+// Keyboard Input
+document.addEventListener("keydown", (e) => {
+  if (!startScreen.classList.contains("hidden")) return;
+  if (isMemorizing) return;
+
+  if (/^[0-9]$/.test(e.key)) {
+    if (userEntry.length < level) {
+      userEntry += e.key;
+      renderDashInput();
+
+      if (userEntry.length === level) {
+        setTimeout(submitEntry, 200);
+      }
+    }
+  }
+
+  if (e.key === "Backspace") {
+    userEntry = userEntry.slice(0, -1);
+    renderDashInput();
+  }
+});
+
+function nextRound() {
+  round++;
+
+  if (round > 10) {
+    const stats = levelStats[level] || { correct: 0, wrong: 0 };
+
+    if (stats.correct === 10) {
+      showCelebration("Perfect", 2600);
+    } else {
+      showCelebration(`Level ${level} Done`, 1800);
+    }
+
+    level++;
+    round = 1;
+    levelEl.textContent = level;
+  }
+
+  roundEl.textContent = round;
+  setTimeout(() => showNumber(), 1200);
+}
+
+startBtn.addEventListener("click", () => {
+  startScreen.classList.add("hidden");
+  mainContent.classList.remove("hidden");
+
+  score = 0;
+  round = 0;
+  level = 2;
+  history = [];
+  levelStats = {};
+  userEntry = "";
+
+  scoreEl.textContent = score;
+  roundEl.textContent = round;
+  levelEl.textContent = level;
+
+  updateHistory();
+  updateLevelStats();
+  renderDashInput();
+  nextRound();
+});
+
+</script>
+
+</body>
+</html>
