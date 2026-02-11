@@ -24,7 +24,6 @@
         <!-- App Content -->
         <div class="flex-1 flex items-center justify-center px-6 pt-10 pb-6">
 
-          <!-- iOS App Card -->
           <div class="w-full text-center relative">
 
             <!-- Celebration Overlay -->
@@ -56,8 +55,11 @@
                   <span><span id="round">0</span>/10</span>
                 </div>
 
-                <!-- iPhone OTP Input -->
+                <!-- OTP Boxes -->
                 <div id="dashInput" class="flex justify-center gap-2 mb-6"></div>
+
+                <!-- 🔢 iPhone Style Number Pad -->
+                <div id="numberPad" class="grid grid-cols-3 gap-3 mb-4"></div>
 
                 <div class="text-[11px] text-gray-500 mb-2">
                   Score <span id="score">0</span>
@@ -71,7 +73,6 @@
                 <h2 class="font-medium mb-3 text-xs">Level Stats & Wrong Attempts</h2>
                 <div id="levelStats" class="mb-4 text-[11px]"></div>
 
-                <!-- Header Row -->
                 <div class="grid grid-cols-3 text-[10px] font-semibold text-gray-500 px-2 mb-1">
                   <span>Level</span>
                   <span class="text-center">Input</span>
@@ -105,6 +106,7 @@ const startScreen = document.getElementById("startScreen");
 const mainContent = document.getElementById("mainContent");
 
 const dashInput = document.getElementById("dashInput");
+const numberPad = document.getElementById("numberPad");
 const scoreEl = document.getElementById("score");
 const roundEl = document.getElementById("round");
 const levelEl = document.getElementById("level");
@@ -162,6 +164,46 @@ function renderDashInput(displayValue = "") {
   }
 }
 
+// 🔢 Create iPhone Number Pad
+function renderNumberPad() {
+  numberPad.innerHTML = "";
+  const layout = [1,2,3,4,5,6,7,8,9,"",0,"⌫"];
+
+  layout.forEach(val => {
+    const btn = document.createElement("button");
+    btn.className = "h-12 rounded-full bg-white shadow-sm text-lg font-semibold active:scale-95 transition";
+
+    if(val === "") {
+      btn.className = "";
+      numberPad.appendChild(btn);
+      return;
+    }
+
+    btn.textContent = val;
+
+    btn.addEventListener("click", () => {
+      if(isMemorizing) return;
+
+      if(val === "⌫"){
+        userEntry = userEntry.slice(0,-1);
+        renderDashInput();
+        return;
+      }
+
+      if(userEntry.length < level){
+        userEntry += String(val);
+        renderDashInput();
+
+        if(userEntry.length === level){
+          setTimeout(submitEntry,200);
+        }
+      }
+    });
+
+    numberPad.appendChild(btn);
+  });
+}
+
 function showNumber() {
   currentNumber = generateNumber(level);
   userEntry = "";
@@ -177,7 +219,6 @@ function showNumber() {
   }, 2200);
 }
 
-// ✅ FIXED SYNTAX ERROR HERE
 function updateHistory() {
   historyListEl.innerHTML = history.map(h => `
     <div class="grid grid-cols-3 items-center p-2 rounded-xl bg-white">
@@ -225,28 +266,6 @@ function submitEntry() {
   nextRound();
 }
 
-// Keyboard Input
-document.addEventListener("keydown", (e) => {
-  if (!startScreen.classList.contains("hidden")) return;
-  if (isMemorizing) return;
-
-  if (/^[0-9]$/.test(e.key)) {
-    if (userEntry.length < level) {
-      userEntry += e.key;
-      renderDashInput();
-
-      if (userEntry.length === level) {
-        setTimeout(submitEntry, 200);
-      }
-    }
-  }
-
-  if (e.key === "Backspace") {
-    userEntry = userEntry.slice(0, -1);
-    renderDashInput();
-  }
-});
-
 function nextRound() {
   round++;
 
@@ -283,6 +302,7 @@ startBtn.addEventListener("click", () => {
   roundEl.textContent = round;
   levelEl.textContent = level;
 
+  renderNumberPad();
   updateHistory();
   updateLevelStats();
   renderDashInput();
@@ -293,4 +313,3 @@ startBtn.addEventListener("click", () => {
 
 </body>
 </html>
-
