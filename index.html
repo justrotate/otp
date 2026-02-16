@@ -5,311 +5,306 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>OTP</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    @keyframes shakeOtp {
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+
+    .shake{ animation: shakeOtp .35s ease; }
+
+    @keyframes centerExpand {
+      0% { transform: scale(.6); opacity:0; }
+      60% { transform: scale(1.08); opacity:1; }
+      100% { transform: scale(1); }
+    }
+
+    .center-expand{
+      animation:centerExpand .28s cubic-bezier(.2,.8,.2,1);
+    }
+
+    @keyframes restartSlide {
+      0%{ transform:translateX(-40px); opacity:0; }
+      100%{ transform:translateX(0); opacity:1; }
+    }
+
+    .restart-slide{
+      animation:restartSlide .35s cubic-bezier(.2,.8,.2,1);
+    }
+  </style>
 </head>
 <body class="bg-[#e5e5ea] min-h-screen flex items-center justify-center font-sans">
 
-  <!-- iPhone Device Frame -->
-  <div class="relative">
+<div class="relative">
+  <div class="w-[340px] h-[680px] bg-black rounded-[46px] p-[10px] shadow-2xl">
+    <div id="gameScreen" class="bg-[#f2f2f7] w-full h-full rounded-[36px] overflow-hidden relative flex flex-col">
 
-    <!-- Phone Body -->
-    <div class="w-[340px] h-[680px] bg-black rounded-[46px] p-[10px] shadow-2xl">
+      <div class="absolute top-2 left-1/2 -translate-x-1/2 w-[140px] h-[26px] bg-black rounded-full z-50"></div>
 
-      <!-- Screen -->
-      <div class="bg-[#f2f2f7] w-full h-full rounded-[36px] overflow-hidden relative flex flex-col">
+      <!-- Notification -->
+      <div id="otpNotification" class="absolute top-12 left-1/2 -translate-x-1/2 w-[90%] bg-white/90 backdrop-blur-md shadow-lg rounded-2xl px-4 py-3 text-left text-sm hidden transition-all duration-300">
+        <div class="text-[10px] text-gray-500">Messages</div>
+        <div id="otpNotificationText" class="font-semibold text-black">Your OTP is ----</div>
+      </div>
 
-        <!-- Notch -->
-        <div class="absolute top-2 left-1/2 -translate-x-1/2 w-[140px] h-[26px] bg-black rounded-full z-50"></div>
+      <div class="flex-1 flex flex-col items-center justify-start px-6 pt-32 pb-6 overflow-y-auto">
+        <div class="w-full text-center">
 
-        <!-- App Content -->
-        <div class="flex-1 flex items-center justify-center px-6 pt-10 pb-6">
-
-          <div class="w-full text-center relative">
-
-            <!-- Celebration Overlay -->
-            <div id="celebrationOverlay" class="hidden absolute inset-0 bg-black/70 flex items-center justify-center z-50 rounded-2xl">
-              <div id="celebrationText" class="text-white text-2xl font-semibold animate-pulse"></div>
-            </div>
-
-            <!-- Start Screen -->
-            <div id="startScreen" class="flex flex-col items-center gap-6">
-              <button id="startBtn" class="bg-black text-white w-20 h-20 rounded-full flex items-center justify-center shadow-lg active:scale-95 transition">
-                <i data-lucide="play" class="w-8 h-8"></i>
-              </button>
-            </div>
-
-            <!-- Main Content -->
-            <div id="mainContent" class="hidden">
-
-              <!-- iOS Segmented Control -->
-              <div class="flex mb-6 bg-gray-200 rounded-full p-1">
-                <button id="gameTabBtn" class="flex-1 py-2 rounded-full bg-white text-xs font-medium shadow-sm">Game</button>
-                <button id="historyTabBtn" class="flex-1 py-2 rounded-full text-xs text-gray-500">History</button>
-              </div>
-
-              <!-- GAME TAB -->
-              <div id="gameTab">
-
-                <div class="flex justify-between text-[11px] text-gray-500 mb-4">
-                  <span>Level <span id="level">2</span></span>
-                  <span><span id="round">0</span>/10</span>
-                </div>
-
-                <!-- OTP Boxes -->
-                <div id="dashInput" class="flex justify-center gap-2 mb-6"></div>
-
-                <!-- 🔢 iPhone Style Number Pad -->
-                <div id="numberPad" class="grid grid-cols-3 gap-3 mb-4"></div>
-
-                <div class="text-[11px] text-gray-500 mb-2">
-                  Score <span id="score">0</span>
-                </div>
-
-                <div id="message" class="text-[11px] font-medium h-5 text-gray-600"></div>
-              </div>
-
-              <!-- HISTORY TAB -->
-              <div id="historyTab" class="hidden text-left">
-                <h2 class="font-medium mb-3 text-xs">Level Stats & Wrong Attempts</h2>
-                <div id="levelStats" class="mb-4 text-[11px]"></div>
-
-                <div class="grid grid-cols-3 text-[10px] font-semibold text-gray-500 px-2 mb-1">
-                  <span>Level</span>
-                  <span class="text-center">Input</span>
-                  <span class="text-right">Correct</span>
-                </div>
-
-                <div id="historyList" class="text-[11px] space-y-1 max-h-64 overflow-y-auto"></div>
-              </div>
-
-            </div>
+          <!-- Level Indicator -->
+          <div id="levelContainer" class="flex justify-center text-[13px] text-gray-700 mb-3">
+            Level <span id="level" class="ml-1 font-semibold">1</span>
           </div>
+
+          <div id="tabContainer" class="flex mb-6 bg-gray-200 rounded-full p-1">
+            <button id="gameTabBtn" class="flex-1 py-2 rounded-full bg-white text-xs font-medium shadow-sm transition">Game</button>
+            <button id="historyTabBtn" class="flex-1 py-2 rounded-full text-xs text-gray-500 transition">History</button>
+          </div>
+
+          <div id="gameTab">
+            <div id="dashInput" class="flex justify-center gap-2 mb-3"></div>
+            <!-- ✅ Correct Answer Preview (shown only when wrong) -->
+            <div id="correctPreview" class="flex justify-center gap-2 mb-6"></div>
+            <div id="numberPad" class="grid grid-cols-3 gap-3 mb-4"></div>
+          </div>
+
+          <div id="historyTab" class="hidden text-left">
+            <div class="grid grid-cols-3 text-[10px] font-semibold text-gray-500 px-2 mb-1">
+              <span>Level</span>
+              <span class="text-center">Input</span>
+              <span class="text-right">Correct</span>
+            </div>
+            <div id="historyList" class="text-[11px] space-y-1 max-h-64 overflow-y-auto"></div>
+          </div>
+
         </div>
       </div>
     </div>
   </div>
+</div>
 
 <script>
-lucide.createIcons();
-
 let currentNumber = "";
-let score = 0;
-let round = 0;
-let level = 2;
+let level = 1;
 let history = [];
-let levelStats = {};
 let userEntry = "";
-let isMemorizing = false;
-
-const startBtn = document.getElementById("startBtn");
-const startScreen = document.getElementById("startScreen");
-const mainContent = document.getElementById("mainContent");
+let wrongIndexes = [];
+let canInput = false;
+let notificationTimer = null;
 
 const dashInput = document.getElementById("dashInput");
 const numberPad = document.getElementById("numberPad");
-const scoreEl = document.getElementById("score");
-const roundEl = document.getElementById("round");
 const levelEl = document.getElementById("level");
-const messageEl = document.getElementById("message");
 const historyListEl = document.getElementById("historyList");
-const levelStatsEl = document.getElementById("levelStats");
+const notificationEl = document.getElementById("otpNotification");
+const notificationTextEl = document.getElementById("otpNotificationText");
+const correctPreview = document.getElementById("correctPreview");
+const levelContainer = document.getElementById("levelContainer");
+const tabContainer = document.getElementById("tabContainer");
 
 const gameTabBtn = document.getElementById("gameTabBtn");
 const historyTabBtn = document.getElementById("historyTabBtn");
 const gameTab = document.getElementById("gameTab");
 const historyTab = document.getElementById("historyTab");
 
-const celebrationOverlay = document.getElementById("celebrationOverlay");
-const celebrationText = document.getElementById("celebrationText");
-
 // Tabs
-gameTabBtn.addEventListener("click", () => {
+gameTabBtn.onclick = () => {
   gameTab.classList.remove("hidden");
   historyTab.classList.add("hidden");
-  gameTabBtn.classList.add("bg-white","shadow-sm");
+  gameTabBtn.classList.add("bg-white","shadow-sm","text-black");
   historyTabBtn.classList.remove("bg-white","shadow-sm");
-});
+  historyTabBtn.classList.add("text-gray-500");
+};
 
-historyTabBtn.addEventListener("click", () => {
+historyTabBtn.onclick = () => {
   historyTab.classList.remove("hidden");
   gameTab.classList.add("hidden");
-  historyTabBtn.classList.add("bg-white","shadow-sm");
+  historyTabBtn.classList.add("bg-white","shadow-sm","text-black");
   gameTabBtn.classList.remove("bg-white","shadow-sm");
-});
+  gameTabBtn.classList.add("text-gray-500");
+};
 
-function generateNumber(digits) {
-  let min = Math.pow(10, digits - 1);
-  let max = Math.pow(10, digits) - 1;
-  return Math.floor(min + Math.random() * (max - min)).toString();
+function generateNumber(d){
+  const min = Math.pow(10,d-1);
+  const max = Math.pow(10,d)-1;
+  return Math.floor(min + Math.random()*(max-min)).toString();
 }
 
-function showCelebration(text, duration = 2000) {
-  celebrationText.textContent = text;
-  celebrationOverlay.classList.remove("hidden");
-  setTimeout(() => celebrationOverlay.classList.add("hidden"), duration);
+function showOtpNotification(otp,duration){
+  if(notificationTimer){
+    clearTimeout(notificationTimer);
+    notificationTimer = null;
+  }
+
+  notificationTextEl.textContent = `Your OTP is ${otp}`;
+  notificationEl.classList.remove("hidden");
+
+  notificationTimer = setTimeout(()=>{
+    notificationEl.classList.add("hidden");
+
+    setTimeout(()=>{
+      canInput = true;
+      renderDashInput();
+    },120);
+
+  },duration);
 }
 
-function renderDashInput(displayValue = "") {
-  dashInput.innerHTML = "";
-
-  for (let i = 0; i < level; i++) {
-    const box = document.createElement("div");
-    box.className = "w-11 h-14 rounded-xl bg-white border border-gray-300 flex items-center justify-center text-lg font-semibold text-black";
-
-    box.textContent = displayValue
-      ? displayValue[i] || "-"
-      : userEntry[i] || "-";
-
-    dashInput.appendChild(box);
+function renderCorrectPreview(){
+  correctPreview.innerHTML="";
+  for(let i=0;i<currentNumber.length;i++){
+    const box=document.createElement("div");
+    box.className="w-11 h-14 rounded-xl flex items-center justify-center text-lg font-semibold bg-green-100 border-2 border-green-500 text-green-700";
+    box.textContent=currentNumber[i];
+    correctPreview.appendChild(box);
   }
 }
 
-// 🔢 Create iPhone Number Pad
-function renderNumberPad() {
-  numberPad.innerHTML = "";
-  const layout = [1,2,3,4,5,6,7,8,9,"",0,"⌫"];
+function renderDashInput(){
+  dashInput.classList.remove("gap-2","gap-1","gap-[2px]");
+  if(level<=6) dashInput.classList.add("gap-2");
+  else if(level<=8) dashInput.classList.add("gap-1");
+  else dashInput.classList.add("gap-[2px]");
 
-  layout.forEach(val => {
-    const btn = document.createElement("button");
-    btn.className = "h-12 rounded-full bg-white shadow-sm text-lg font-semibold active:scale-95 transition";
+  const existingBoxes = dashInput.children.length;
 
-    if(val === "") {
-      btn.className = "";
-      numberPad.appendChild(btn);
-      return;
+  if(existingBoxes < level){
+    for(let i=existingBoxes;i<level;i++){
+      const box=document.createElement("div");
+      box.className="w-11 h-14 rounded-xl flex items-center justify-center text-lg font-semibold transition-all duration-150 center-expand bg-white border border-gray-300";
+      box.textContent="-";
+      const middleIndex=Math.floor(dashInput.children.length/2);
+      if(dashInput.children.length===0) dashInput.appendChild(box);
+      else dashInput.insertBefore(box,dashInput.children[middleIndex]);
     }
+  }
 
-    btn.textContent = val;
+  if(existingBoxes > level){
+    for(let i=existingBoxes;i>level;i--) dashInput.removeChild(dashInput.lastChild);
+  }
 
-    btn.addEventListener("click", () => {
-      if(isMemorizing) return;
+  Array.from(dashInput.children).forEach((box,i)=>{
+    const isActive = canInput && notificationEl.classList.contains("hidden") && i===userEntry.length;
+    box.className=`w-11 h-14 rounded-xl flex items-center justify-center text-lg font-semibold transition-all duration-150
+      ${wrongIndexes.includes(i)
+        ? "bg-red-100 border-2 border-red-500 text-red-600"
+        : isActive
+          ? "bg-white border-2 border-blue-500 shadow-[0_0_0_3px_rgba(59,130,246,0.15)] scale-105"
+          : "bg-white border border-gray-300"}`;
+    box.textContent=userEntry[i]||"-";
+  });
+}
 
-      if(val === "⌫"){
-        userEntry = userEntry.slice(0,-1);
+function renderNumberPad(){
+  numberPad.innerHTML="";
+  const layout=[1,2,3,4,5,6,7,8,9,"",0,"⌫"];
+  layout.forEach(val=>{
+    if(val===""){numberPad.appendChild(document.createElement("div"));return;}
+    const btn=document.createElement("button");
+    btn.className="h-14 rounded-full bg-white shadow flex items-center justify-center text-lg font-semibold active:scale-95 transition";
+    btn.textContent=val;
+    btn.onclick=()=>{
+      if(!canInput) return;
+      if(val==="⌫"){
+        userEntry=userEntry.slice(0,-1);
         renderDashInput();
         return;
       }
-
-      if(userEntry.length < level){
-        userEntry += String(val);
+      if(userEntry.length<level){
+        userEntry+=String(val);
         renderDashInput();
-
-        if(userEntry.length === level){
-          setTimeout(submitEntry,200);
-        }
+        if(userEntry.length===level) setTimeout(submitEntry,200);
       }
-    });
-
+    };
     numberPad.appendChild(btn);
   });
 }
 
-function showNumber() {
-  currentNumber = generateNumber(level);
-  userEntry = "";
-  isMemorizing = true;
+function showNumber(){
+  // ✅ show header UI again for new round
+  levelContainer.classList.remove("hidden");
+  tabContainer.classList.remove("hidden");
+  // ✅ show keypad again for new round
+  numberPad.classList.remove("hidden");
+  correctPreview.innerHTML="";
+  currentNumber=generateNumber(level);
+  userEntry="";
+  canInput=false;
+  renderDashInput();
 
-  renderDashInput(currentNumber);
-  messageEl.textContent = "Memorize";
+  let memorizeTime=1800;
+  if(level>6) memorizeTime=1800+(level-6)*400;
 
-  setTimeout(() => {
-    isMemorizing = false;
-    renderDashInput();
-    messageEl.textContent = "Enter";
-  }, 2200);
+  showOtpNotification(currentNumber,memorizeTime);
 }
 
-function updateHistory() {
-  historyListEl.innerHTML = history.map(h => `
-    <div class="grid grid-cols-3 items-center p-2 rounded-xl bg-white">
+function updateHistory(){
+  historyListEl.innerHTML=history.map(h=>
+    `<div class="grid grid-cols-3 items-center p-2 rounded-xl bg-white">
       <span>L${h.level}</span>
       <span class="text-center font-medium">${h.input}</span>
       <span class="text-right font-mono">${h.correct}</span>
-    </div>
-  `).join("");
+    </div>`).join("");
 }
 
-function updateLevelStats() {
-  levelStatsEl.innerHTML = Object.keys(levelStats).map(l => {
-    let s = levelStats[l];
-    return `<div class="flex justify-between border-b py-1">
-      <span>Level ${l}</span>
-      <span class="text-green-600">✔ ${s.correct}</span>
-      <span class="text-red-500">✖ ${s.wrong}</span>
-    </div>`;
-  }).join("");
-}
+function submitEntry(){
+  if(userEntry===currentNumber){
+    canInput=false;
+    level++;
+    userEntry="";
+    renderDashInput();
+    levelEl.textContent=level;
+    setTimeout(showNumber,500);
+  }else{
+    history.unshift({level,input:userEntry,correct:currentNumber});
+    if(history.length>50)history.pop();
 
-function ensureLevelStat() {
-  if (!levelStats[level]) {
-    levelStats[level] = { correct: 0, wrong: 0 };
-  }
-}
-
-function submitEntry() {
-  ensureLevelStat();
-
-  if (userEntry === currentNumber) {
-    score++;
-    levelStats[level].correct++;
-    messageEl.textContent = "Correct";
-  } else {
-    levelStats[level].wrong++;
-    history.unshift({ level, input: userEntry, correct: currentNumber });
-    if (history.length > 50) history.pop();
-    messageEl.textContent = "Wrong";
-  }
-
-  scoreEl.textContent = score;
-  updateHistory();
-  updateLevelStats();
-  nextRound();
-}
-
-function nextRound() {
-  round++;
-
-  if (round > 10) {
-    const stats = levelStats[level] || { correct: 0, wrong: 0 };
-
-    if (stats.correct === 10) {
-      showCelebration("Perfect", 2600);
-    } else {
-      showCelebration(`Level ${level} Done`, 1800);
+    wrongIndexes=[];
+    for(let i=0;i<currentNumber.length;i++){
+      if(userEntry[i]!==currentNumber[i]) wrongIndexes.push(i);
     }
 
-    level++;
-    round = 1;
-    levelEl.textContent = level;
-  }
+    canInput=false;
+    renderDashInput();
+    renderCorrectPreview();
 
-  roundEl.textContent = round;
-  setTimeout(() => showNumber(), 1200);
+    // ❌ hide only number buttons when wrong
+    numberPad.classList.add("hidden");
+
+    dashInput.classList.remove("shake");
+    void dashInput.offsetWidth;
+    dashInput.classList.add("shake");
+
+    levelEl.textContent=level;
+    updateHistory();
+
+    setTimeout(()=>{
+      wrongIndexes=[];
+      level=1;
+      userEntry="";
+
+      dashInput.classList.remove("restart-slide");
+      void dashInput.offsetWidth;
+      dashInput.classList.add("restart-slide");
+
+      renderDashInput();
+      levelEl.textContent=level;
+      showNumber();
+    },3000);
+  }
 }
 
-startBtn.addEventListener("click", () => {
-  startScreen.classList.add("hidden");
-  mainContent.classList.remove("hidden");
-
-  score = 0;
-  round = 0;
-  level = 2;
-  history = [];
-  levelStats = {};
-  userEntry = "";
-
-  scoreEl.textContent = score;
-  roundEl.textContent = round;
-  levelEl.textContent = level;
-
+function startGameAutomatically(){
   renderNumberPad();
   updateHistory();
-  updateLevelStats();
   renderDashInput();
-  nextRound();
-});
+  showNumber();
+}
 
+startGameAutomatically();
 </script>
-
 </body>
 </html>
