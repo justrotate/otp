@@ -40,7 +40,7 @@
 <body class="bg-[#e5e5ea] min-h-screen flex items-center justify-center font-sans">
 
 <div class="relative">
-  <div class="w-[340px] h-[680px] bg-black rounded-[46px] p-[10px] shadow-2xl">
+  <div class="w-[340px] h-[620px] bg-black rounded-[46px] p-[10px] shadow-2xl">
     <div id="gameScreen" class="bg-[#f2f2f7] w-full h-full rounded-[36px] overflow-hidden relative flex flex-col">
 
       <div class="absolute top-2 left-1/2 -translate-x-1/2 w-[140px] h-[26px] bg-black rounded-full z-50"></div>
@@ -51,7 +51,7 @@
         <div id="otpNotificationText" class="font-semibold text-black">Your OTP is ----</div>
       </div>
 
-      <div class="flex-1 flex flex-col items-center justify-start px-6 pt-32 pb-6 overflow-y-auto">
+      <div class="flex-1 flex flex-col items-center justify-start px-6 pt-24 pb-4">
         <div class="w-full text-center">
 
           <!-- Level Indicator -->
@@ -77,7 +77,7 @@
               <span class="text-center">Input</span>
               <span class="text-right">Correct</span>
             </div>
-            <div id="historyList" class="text-[11px] space-y-1 max-h-64 overflow-y-auto"></div>
+            <div id="historyList" class="text-[11px] space-y-1 max-h-44 overflow-y-auto"></div>
           </div>
 
         </div>
@@ -157,7 +157,7 @@ function renderCorrectPreview(){
   correctPreview.innerHTML="";
   for(let i=0;i<currentNumber.length;i++){
     const box=document.createElement("div");
-    box.className="w-11 h-14 rounded-xl flex items-center justify-center text-lg font-semibold bg-green-100 border-2 border-green-500 text-green-700";
+    box.className="w-10 h-12 rounded-xl flex items-center justify-center text-lg font-semibold bg-green-100 border-2 border-green-500 text-green-700";
     box.textContent=currentNumber[i];
     correctPreview.appendChild(box);
   }
@@ -174,7 +174,7 @@ function renderDashInput(){
   if(existingBoxes < level){
     for(let i=existingBoxes;i<level;i++){
       const box=document.createElement("div");
-      box.className="w-11 h-14 rounded-xl flex items-center justify-center text-lg font-semibold transition-all duration-150 center-expand bg-white border border-gray-300";
+      box.className="w-10 h-12 rounded-xl flex items-center justify-center text-lg font-semibold transition-all duration-150 center-expand bg-white border border-gray-300";
       box.textContent="-";
       const middleIndex=Math.floor(dashInput.children.length/2);
       if(dashInput.children.length===0) dashInput.appendChild(box);
@@ -188,7 +188,7 @@ function renderDashInput(){
 
   Array.from(dashInput.children).forEach((box,i)=>{
     const isActive = canInput && notificationEl.classList.contains("hidden") && i===userEntry.length;
-    box.className=`w-11 h-14 rounded-xl flex items-center justify-center text-lg font-semibold transition-all duration-150
+    box.className=`w-10 h-12 rounded-xl flex items-center justify-center text-lg font-semibold transition-all duration-150
       ${wrongIndexes.includes(i)
         ? "bg-red-100 border-2 border-red-500 text-red-600"
         : isActive
@@ -204,7 +204,7 @@ function renderNumberPad(){
   layout.forEach(val=>{
     if(val===""){numberPad.appendChild(document.createElement("div"));return;}
     const btn=document.createElement("button");
-    btn.className="h-14 rounded-full bg-white shadow flex items-center justify-center text-lg font-semibold active:scale-95 transition";
+    btn.className="h-12 rounded-full bg-white shadow flex items-center justify-center text-lg font-semibold active:scale-95 transition";
     btn.textContent=val;
     btn.onclick=()=>{
       if(!canInput) return;
